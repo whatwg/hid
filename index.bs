@@ -598,7 +598,7 @@ item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, a
 1.  Set |reportItem|["{{HIDReportItem/wrap}}"] to |bitfield|[3].
 1.  Set |reportItem|["{{HIDReportItem/isLinear}}"] to !|bitfield|[4].
 1.  Set |reportItem|["{{HIDReportItem/hasPreferredState}}"] to
-    |bitfield|[5].
+    !|bitfield|[5].
 1.  Set |reportItem|["{{HIDReportItem/hasNull}}"] to |bitfield|[6].
 1.  Set |reportItem|["{{HIDReportItem/isVolatile}}"] to |bitfield|[7].
 1.  Set |reportItem|["{{HIDReportItem/isBufferedBytes}}"] to
