@@ -558,16 +558,17 @@ field=]. Each item also has a tag that identifies its type.
     *   If |item| is a [=Local item=]:
         1.  Let |value| be the [=item data field=]
             interpreted as an `unsigned long`.
-        1.  If |item| has the [=Usage tag=]:
-            1.  If |item|'s [=bSize field=] is 1 or 2:
-                1.  Let |usageId| be an `unsigned short`
-                    containing the lower 16 bits of |value|.
-                1.  Let |globalState| be the last [=list/item=] of
-                    |globalStack|.
-                1.  Set |value| to a [=HID usage=] composed of
-                    |globalState|["{{HIDCollectionInfo/usagePage}}"] in the
-                    high order bits and |usageId| in the low order bits.
-            1.  [=list/Append=] |value| to |usages|.
+        1.  If |item| has the [=Usage tag=], [=Usage Minimum tag=], or
+            [=Usage Maximum tag=], and |item|'s [=bSize field=] is 1 or 2:
+            1.  Let |usageId| be an `unsigned short`
+                containing the lower 16 bits of |value|.
+            1.  Let |globalState| be the last [=list/item=] of
+                |globalStack|.
+            1.  Set |value| to a [=HID usage=] composed of
+                |globalState|["{{HIDCollectionInfo/usagePage}}"] in the
+                high order bits and |usageId| in the low order bits.
+        1.  If |item| has the [=Usage tag=], then [=list/append=] |value|
+            to |usages|.
         1.  If |item| has the [=Usage Minimum tag=], then set
             |localState|["{{HIDReportItem/usageMinimum}}"] to |value|.
         1.  If |item| has the [=Usage Maximum tag=], then set
