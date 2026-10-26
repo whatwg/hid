@@ -1193,9 +1193,9 @@ The {{HIDDevice/open()}} method steps are:
 The {{HIDDevice/close()}} method steps are:
 
 1.  Let |promise| be [=a new promise=].
-1.  If [=this=].{{HIDDevice/[[state]]}} is either `"forgotten"` or
-    `"forgetting"`, then [=reject=] |promise| with a
-    "{{InvalidStateError}}" {{DOMException}} and return |promise|.
+1.  If [=this=].{{HIDDevice/[[state]]}} is one of `"forgotten"`,
+    `"forgetting"`, `"opening"`, or `"closing"`, then [=reject=] |promise|
+    with a "{{InvalidStateError}}" {{DOMException}} and return |promise|.
 1.  Set [=this=].{{HIDDevice/[[state]]}} to `"closing"`.
 1.  [=list/For each=] |pendingPromise| of
     [=this=].{{HIDDevice/[[pendingSendReportPromises]]}}:
