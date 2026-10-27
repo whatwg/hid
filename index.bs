@@ -638,15 +638,17 @@ item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, a
     |globalState|["{{HIDReportItem/physicalMinimum}}"].
 1.  Set |reportItem|["{{HIDReportItem/physicalMaximum}}"] to
     |globalState|["{{HIDReportItem/physicalMaximum}}"].
-1.  If "{{HIDReportItem/usageMinimum}}" is in |localState|, then set
+1.  Set |reportItem|["{{HIDReportItem/isRange}}"] to `true` if both
+    "{{HIDReportItem/usageMinimum}}" and "{{HIDReportItem/usageMaximum}}"
+    are in |localState| and |localState|["{{HIDReportItem/usageMinimum}}"]
+    is less than or equal to |localState|["{{HIDReportItem/usageMaximum}}"],
+    or false otherwise.
+1.  If |reportItem|["{{HIDReportItem/isRange}}"] is `true`, set
     |reportItem|["{{HIDReportItem/usageMinimum}}"] to
     |localState|["{{HIDReportItem/usageMinimum}}"].
-1.  If "{{HIDReportItem/usageMaximum}}" is in |localState|, then set
+1.  If |reportItem|["{{HIDReportItem/isRange}}"] is `true`, set
     |reportItem|["{{HIDReportItem/usageMaximum}}"] to
     |localState|["{{HIDReportItem/usageMaximum}}"].
-1.  Set |reportItem|["{{HIDReportItem/isRange}}"] to `true` if
-    |reportItem|["{{HIDReportItem/usageMinimum}}"] is less than
-    |reportItem|["{{HIDReportItem/usageMaximum}}"], or `false` otherwise.
 1.  If `"stringMinimum"` is in |localState| and `"stringMaximum"` is in
     |localState|:
     1.  [=list/Append=] the [=list/item=]s of [=the range=] from
