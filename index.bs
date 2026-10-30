@@ -41,6 +41,7 @@ Translation: ko https://ko.htmlspecs.com/hid/
 <pre class="link-defaults">
 spec:html; type:dfn; for:/; text:global object
 spec:infra; type:dfn; text:list
+spec:html; type:dfn; for:/; text:origin
 </pre>
 
 # Introduction # {#introduction}
@@ -306,8 +307,8 @@ interface is enumerated as a separate [=HID interface=].
     result of calling |device|'s [=relevant global object=]'s {{WorkerNavigator}}
     object's {{WorkerNavigator/hid}} getter.
 1.  [=list/Append=] |device| to |hid|.{{HID/[[devices]]}}.
-1.  If the user has allowed the site to access |device| as the result
-    of a previous call to {{HID/requestDevice()}}, then [=queue a global
+1.  If |device| [=is allowed to access|is allowed to be accessed=] by
+    |hid|'s [=relevant global object=], then [=queue a global
     task=] on the [=relevant global object=] of |hid| using the [=HID
     device task source=] to [=fire an event=] named {{HID/connect}} at |hid|
     using {{HIDConnectionEvent}} with its {{HIDConnectionEvent/device}}
@@ -675,8 +676,8 @@ following steps:
     result of calling |device|'s [=relevant global object=]'s {{WorkerNavigator}}
     object's {{WorkerNavigator/hid}} getter.
 1.  [=list/Remove=] |device| from |hid|.{{HID/[[devices]]}}.
-1.  If the user has allowed the site to access |device| as the result
-    of a previous call to {{HID/requestDevice()}}, then [=queue a global
+1.  If |device| [=is allowed to access|is allowed to be accessed=] by
+    |hid|'s [=relevant global object=], then [=queue a global
     task=] on the [=relevant global object=] of |hid| using the [=HID
     device task source=] to [=fire an event=] named {{HID/disconnect}} at |hid|
     using {{HIDConnectionEvent}} with its {{HIDConnectionEvent/device}}
@@ -707,8 +708,8 @@ The {{HID/getDevices()}} method steps are:
         [=sequence=] of {{HIDDevice}}.
     1.  [=list/For each=] |device| of
         [=this=].{{HID/[[devices]]}}:
-        1.  If the user has allowed the site to access |device| as
-            the result of a previous call to {{HID/requestDevice()}} and
+        1.  If |device| [=is allowed to access|is allowed to be
+            accessed=] by [=this=]'s [=relevant global object=] and
             |device|.{{HIDDevice/[[state]]}} is not `"forgotten"`, then
             [=list/append=] |device| to |devices|.
     1.  [=Queue a global task=] on the [=relevant global object=] of
@@ -788,6 +789,9 @@ The {{HID/requestDevice()}} method steps are:
         on the [=relevant global object=] of [=this=] using the [=HID
         device task source=] to [=resolve=] |promise| with |devices| and
         abort these steps.
+    1.  [=Grant device access=] to the chosen device for [=this=]'s
+        [=relevant settings object=]'s [=environment settings
+        object/origin=].
     1.  [=list/For each=] |device| of
         [=this=].{{HID/[[devices]]}}:
         1.  If |device| represents a [=HID interface=] exposed by the
@@ -1169,6 +1173,31 @@ following steps:
 
 </div>
 
+<div algorithm="abort pending requests">
+To <dfn>abort pending requests</dfn> on a {{HIDDevice}} |device|, run
+the following steps:
+
+1.  [=list/For each=] |pendingPromise| of
+    |device|.{{HIDDevice/[[pendingSendReportPromises]]}}:
+    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
+        {{DOMException}}.
+1.  [=list/Empty=]
+    |device|.{{HIDDevice/[[pendingSendReportPromises]]}}.
+1.  [=list/For each=] |pendingPromise| of
+    |device|.{{HIDDevice/[[pendingSendFeatureReportPromises]]}}:
+    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
+        {{DOMException}}.
+1.  [=list/Empty=]
+    |device|.{{HIDDevice/[[pendingSendFeatureReportPromises]]}}.
+1.  [=list/For each=] |pendingPromise| of
+    |device|.{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}:
+    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
+        {{DOMException}}.
+1.  [=list/Empty=]
+    |device|.{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}.
+
+</div>
+
 ## <dfn method for="HIDDevice">open()</dfn> method ## {#open-method}
 
 <div algorithm="HIDDevice.open()">
@@ -1185,10 +1214,29 @@ The {{HIDDevice/open()}} method steps are:
         [=relevant global object=] of [=this=] using the [=HID device
         task source=] to [=reject=] |promise| with a "{{NetworkError}}"
         {{DOMException}} and abort these steps.
-    1.  Set [=this=].{{HIDDevice/[[state]]}} to `"opened"`.
     1.  [=Queue a global task=] on the [=relevant global object=] of
-        [=this=] using the [=HID device task source=] to [=resolve=]
-        |promise| with `undefined`.
+        [=this=] using the [=HID device task source=] to run the
+        following steps:
+        1.  If [=this=].{{HIDDevice/[[state]]}} is not `"opening"`, or
+            [=this=] is not [=allowed to access|allowed to be accessed=]
+            by [=this=]'s [=relevant global object=], then:
+            1.  If [=this=].{{HIDDevice/[[state]]}} is `"opening"`,
+                then set [=this=].{{HIDDevice/[[state]]}} to
+                `"closed"`.
+            1.  Run the following steps [=in parallel=]:
+                1.  Invoke the operating system to close the HID device
+                    and release any associated resources.
+            1.  [=Reject=] |promise| with a "{{NotAllowedError}}"
+                {{DOMException}} and abort these steps.
+
+            Note: This happens when {{HIDDevice/forget()}} is called
+            while the device is being opened, or when the user agent
+            [=revokes device access=] while the device is being opened.
+            Revoking device access always takes precedence over a
+            pending {{HIDDevice/open()}} call.
+
+        1.  Set [=this=].{{HIDDevice/[[state]]}} to `"opened"`.
+        1.  [=Resolve=] |promise| with `undefined`.
 1.  Return |promise|.
 
 </div>
@@ -1203,31 +1251,16 @@ The {{HIDDevice/close()}} method steps are:
     `"forgetting"`, `"opening"`, or `"closing"`, then [=reject=] |promise|
     with a "{{InvalidStateError}}" {{DOMException}} and return |promise|.
 1.  Set [=this=].{{HIDDevice/[[state]]}} to `"closing"`.
-1.  [=list/For each=] |pendingPromise| of
-    [=this=].{{HIDDevice/[[pendingSendReportPromises]]}}:
-    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-        {{DOMException}}.
-1.  [=list/Empty=]
-    [=this=].{{HIDDevice/[[pendingSendReportPromises]]}}.
-1.  [=list/For each=] |pendingPromise| of
-    [=this=].{{HIDDevice/[[pendingSendFeatureReportPromises]]}}:
-    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-        {{DOMException}}.
-1.  [=list/Empty=]
-    [=this=].{{HIDDevice/[[pendingSendFeatureReportPromises]]}}.
-1.  [=list/For each=] |pendingPromise| of
-    [=this=].{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}:
-    1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-        {{DOMException}}.
-1.  [=list/Empty=]
-    [=this=].{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}.
+1.  [=Abort pending requests=] on [=this=].
 1.  Perform the following steps [=in parallel=]:
     1.  Invoke the operating system to close the HID device and
         release any associated resources.
-    1.  Set [=this=].{{HIDDevice/[[state]]}} to `"closed"`.
     1.  [=Queue a global task=] on the [=relevant global object=] of
-        [=this=] using the [=HID device task source=] to [=resolve=]
-        |promise| with `undefined`.
+        [=this=] using the [=HID device task source=] to run the
+        following steps:
+        1.  If [=this=].{{HIDDevice/[[state]]}} is `"closing"`, then
+            set [=this=].{{HIDDevice/[[state]]}} to `"closed"`.
+        1.  [=Resolve=] |promise| with `undefined`.
 1.  Return |promise|.
 
 </div>
@@ -1243,37 +1276,36 @@ also revoke additional (unspecified yet) permissions in the future.
 The {{HIDDevice/forget()}} method steps are:
 
 1.  Let |promise| be [=a new promise=].
+1.  Let |hid| be the result of calling [=this=]'s [=relevant global
+    object=]'s {{Navigator}} object's {{Navigator/hid}} getter if [=this=]'s
+    [=relevant global object=] is a {{Window}} object, otherwise be the
+    result of calling [=this=]'s [=relevant global object=]'s {{WorkerNavigator}}
+    object's {{WorkerNavigator/hid}} getter.
+1.  Let |physicalDevice| be the device that exposes the [=HID interface=]
+    represented by [=this=].
+1.  [=list/For each=] |device| of |hid|.{{HID/[[devices]]}}:
+    1.  If |device| does not represent a [=HID interface=] exposed by
+        |physicalDevice|, or |device|.{{HIDDevice/[[state]]}} is
+        `"forgotten"`, then [=iteration/continue=].
+    1.  Set |device|.{{HIDDevice/[[state]]}} to `"forgetting"`.
+    1.  [=Abort pending requests=] on |device|.
+1.  Let |origin| be [=this=]'s [=relevant settings object=]'s
+    [=environment settings object/origin=].
 1.  Perform the following steps [=in parallel=]:
-    1.  [=list/For each=] |device| of
-        [=this=].{{HID/[[devices]]}}:
-        1.  If |device| does not share device access permissions with
-            the HIDDevice, then continue to the next device.
-        1.  Set |device|.{{HIDDevice/[[state]]}} to `"forgetting"`.
-        1.  [=list/For each=] |pendingPromise| of
-            |device|.{{HIDDevice/[[pendingSendReportPromises]]}}:
-            1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-                {{DOMException}}.
-        1.  [=list/Empty=]
-            |device|.{{HIDDevice/[[pendingSendReportPromises]]}}.
-        1.  [=list/For each=] |pendingPromise| of
-            |device|.{{HIDDevice/[[pendingSendFeatureReportPromises]]}}:
-            1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-                {{DOMException}}.
-        1.  [=list/Empty=]
-            |device|.{{HIDDevice/[[pendingSendFeatureReportPromises]]}}.
-        1.  [=list/For each=] |pendingPromise| of
-            |device|.{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}:
-            1.  [=Reject=] |pendingPromise| with an "{{AbortError}}"
-                {{DOMException}}.
-        1.  [=list/Empty=]
-            |device|.{{HIDDevice/[[pendingReceiveFeatureReportPromises]]}}.
-        1.  Invoke the user agent to revoke access to all the [=HID
-            interfaces=] exposed by |device|.
-        1.  Set |device|.{{HIDDevice/[[state]]}} to `"forgotten"`.
+    1.  [=Revoke device access=] to |physicalDevice| for |origin|.
     1.  [=Queue a global task=] on the [=relevant global object=] of
         [=this=] using the [=HID device task source=] to [=resolve=]
         |promise| with `undefined`.
 1.  Return |promise|.
+
+Note: {{HIDDevice/forget()}} does not check [=this=].{{HIDDevice/[[state]]}}
+before revoking access, and always takes precedence over concurrent
+calls to {{HIDDevice/open()}} or {{HIDDevice/close()}}. If
+{{HIDDevice/open()}} is pending when {{HIDDevice/forget()}} is called,
+the {{HIDDevice/open()}} promise is rejected with a
+"{{NotAllowedError}}" {{DOMException}} and the device is not left
+open. This ensures that a site's request to revoke its own access
+cannot fail because of an unrelated pending operation.
 
 </div>
 
@@ -2113,6 +2145,107 @@ following steps return `true`:
 1.  Return `true`.
 
 </div>
+
+# Device access permissions # {#device-access-permissions}
+
+An <dfn>allowed HID device</dfn> is a [=struct=] with the following
+[=struct/items=]:
+
+: <dfn for="allowed HID device">device</dfn>
+:: An [=implementation-defined=] identifier for a physical device that
+    exposes one or more [=HID interfaces=].
+
+The user agent maintains a <dfn>HID permission storage</dfn>, which is
+a [=map=] whose [=map/keys=] are [=origins=] and whose [=map/values=]
+are [=lists=] of [=allowed HID devices=]. The [=HID permission
+storage=] is initially empty.
+
+<div class="note">
+The [=HID permission storage=] records which devices each [=origin=]
+has been granted access to. The user agent <span class="allow-2119">may</span>
+persist the [=HID permission storage=] across sessions. To recognize a
+device that has been disconnected and reconnected, the user agent
+<span class="allow-2119">may</span> identify a device using properties such as
+its [=vendor ID=], [=product ID=], and serial number.
+</div>
+
+<div algorithm="is allowed to access">
+A {{HIDDevice}} |device| <dfn lt="is allowed to access|allowed to
+access">is allowed to be accessed</dfn> by a [=global object=] |global|
+if the following steps return `true`:
+
+1.  Let |origin| be |global|'s [=relevant settings object=]'s
+    [=environment settings object/origin=].
+1.  If the [=HID permission storage=][|origin|] does not [=map/exist=],
+    return `false`.
+1.  [=list/For each=] |allowedDevice| of the [=HID permission
+    storage=][|origin|]:
+    1.  If |allowedDevice|'s [=allowed HID device/device=] identifies
+        the physical device that exposes the [=HID interface=]
+        represented by |device|, return `true`.
+1.  Return `false`.
+
+</div>
+
+<div algorithm="grant device access">
+To <dfn>grant device access</dfn> to a physical device |physicalDevice|
+for an [=origin=] |origin|, run the following steps:
+
+1.  If the [=HID permission storage=][|origin|] does not [=map/exist=],
+    [=map/set=] the [=HID permission storage=][|origin|] to an empty
+    [=list=].
+1.  If the [=HID permission storage=][|origin|] [=list/contains=] an
+    [=allowed HID device=] whose [=allowed HID device/device=]
+    identifies |physicalDevice|, then abort these steps.
+1.  [=list/Append=] a new [=allowed HID device=] whose [=allowed HID
+    device/device=] identifies |physicalDevice| to the [=HID permission
+    storage=][|origin|].
+
+</div>
+
+<div algorithm="revoke device access">
+To <dfn lt="revoke device access|revokes device access">revoke device
+access</dfn> to a physical device |physicalDevice| for an [=origin=]
+|origin|, run the following steps:
+
+1.  If the [=HID permission storage=][|origin|] [=map/exists=], then
+    [=list/remove=] all [=allowed HID devices=] whose [=allowed HID
+    device/device=] identifies |physicalDevice| from the [=HID
+    permission storage=][|origin|].
+1.  [=list/For each=] [=global object=] |global| whose [=relevant
+    settings object=]'s [=environment settings object/origin=] is
+    [=same origin=] with |origin|:
+    1.  [=Queue a global task=] on |global| using the [=HID device
+        task source=] to run the following steps:
+        1.  Let |hid| be the result of calling |global|'s
+            {{Navigator}} object's {{Navigator/hid}} getter if |global|
+            is a {{Window}} object, otherwise be the result of calling
+            |global|'s {{WorkerNavigator}} object's
+            {{WorkerNavigator/hid}} getter.
+        1.  [=list/For each=] |device| of |hid|.{{HID/[[devices]]}}:
+            1.  If |device| does not represent a [=HID interface=]
+                exposed by |physicalDevice|, then
+                [=iteration/continue=].
+            1.  If |device|.{{HIDDevice/[[state]]}} is `"opened"`,
+                `"closing"`, or `"forgetting"`, then run the following
+                steps [=in parallel=]:
+                1.  Invoke the operating system to close the HID device
+                    and release any associated resources, if it is open.
+            1.  Set |device|.{{HIDDevice/[[state]]}} to `"forgotten"`.
+            1.  [=Abort pending requests=] on |device|.
+
+</div>
+
+The user agent <span class="allow-2119">may</span> revoke an [=origin=]'s access
+to a device at any time, for example in response to the user changing
+a permission setting or a change to a policy that granted access. When
+it does, the user agent <span class="allow-2119">must</span> [=revoke device
+access=] to the device for that [=origin=].
+
+Note: A {{HIDDevice}} whose state is `"opening"` when access is revoked
+is handled by the {{HIDDevice/open()}} method steps, which check
+whether access is still allowed after the operating system has opened
+the device, and close the device if it is not.
 
 # Integrations # {#integrations}
 
