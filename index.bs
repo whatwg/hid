@@ -339,10 +339,20 @@ items</dfn> and <dfn>Local items</dfn> describe the data fields.
 [=Main item=], while [=Global items=] define characteristics that
 affect all subsequently defined [=Main items=].
 
-Each item has an <dfn>item data field</dfn> containing 0, 1, 2, or 4
-bytes of data associated with the item and a <dfn>bSize field</dfn>
-that describes how many bytes are used to store the [=item data
-field=]. Each item also has a tag that identifies its type.
+Each item has a tag that identifies its type and a <dfn>bSize
+field</dfn> that encodes the item's <dfn>item data size</dfn>. A
+[=bSize field=] of 0, 1, 2, or 3 indicates an [=item data size=] of 0,
+1, 2, or 4 bytes, respectively. If the [=item data size=] is not 0,
+the item also has an <dfn>item data field</dfn> containing [=item data
+size=] bytes of data associated with the item.
+
+An item's <dfn>unsigned item data value</dfn> is its [=item data
+field=] interpreted as a little-endian unsigned integer, or 0 if the
+item has no [=item data field=].
+
+An item's <dfn>signed item data value</dfn> is its [=item data field=]
+interpreted as a little-endian two's complement signed integer [=item
+data size=] bytes wide, or 0 if the item has no [=item data field=].
 </div>
 
 1.  Let |items| be the result of converting the [=report descriptor=]
@@ -376,14 +386,14 @@ field=]. Each item also has a tag that identifies its type.
     Note: [=Main items=] are described in [[!USBIF-HID-CLASS]] sections
     6.2.2.4 through 6.2.2.6. An item with the <dfn>Input tag</dfn>,
     <dfn>Output tag</dfn>, or <dfn>Feature tag</dfn> defines a field
-    within an input, output, or feature report. The [=item data
-    field=] of a [=Main item=] with an [=Input tag=], [=Output tag=],
-    or [=Feature tag=] is a bit field containing several boolean
+    within an input, output, or feature report. The [=unsigned item
+    data value=] of a [=Main item=] with an [=Input tag=], [=Output
+    tag=], or [=Feature tag=] is a bit field containing several boolean
     parameters describing the data field. An item with the
     <dfn>Collection tag</dfn> defines a new collection nested within
     the current collection, or a new [=top-level collection=] if
-    there is no current collection. The [=item data field=] of a
-    [=Main item=] with a [=Collection tag=] contains the
+    there is no current collection. The [=unsigned item data value=]
+    of a [=Main item=] with a [=Collection tag=] contains the
     <dfn>collection type</dfn>. An item with the <dfn>End Collection
     tag</dfn> closes the current collection.
 
@@ -474,23 +484,24 @@ field=]. Each item also has a tag that identifies its type.
         1.  If |item| is a [=Global item=]:
             1.  Let |globalState| be the last [=list/item=] of
                 |globalStack|.
-            1.  Let |value| be the [=item data field=]
-                interpreted as an `unsigned long`.
+            1.  Let |value| be |item|'s [=unsigned item data value=].
+            1.  Let |signedValue| be |item|'s [=signed item data
+                value=].
             1.  If |item| has the [=Usage Page tag=], then set
                 |globalState|["{{HIDCollectionInfo/usagePage}}"] to
                 |value|.
             1.  If |item| has the [=Logical Minimum tag=], then set
                 |globalState|["{{HIDReportItem/logicalMinimum}}"] to
-                |value|.
+                |signedValue|.
             1.  If |item| has the [=Logical Maximum tag=], then set
                 |globalState|["{{HIDReportItem/logicalMaximum}}"] to
-                |value|.
+                |signedValue|.
             1.  If |item| has the [=Physical Minimum tag=], then set
                 |globalState|["{{HIDReportItem/physicalMinimum}}"] to
-                |value|.
+                |signedValue|.
             1.  If |item| has the [=Physical Maximum tag=], then set
                 |globalState|["{{HIDReportItem/physicalMaximum}}"] to
-                |value|.
+                |signedValue|.
             1.  If |item| has the [=Report Size tag=], then set
                 |globalState|["{{HIDReportItem/reportSize}}"] to |value|.
             1.  If |item| has the [=Report ID tag=], then set
@@ -543,8 +554,8 @@ field=]. Each item also has a tag that identifies its type.
                     to |nibbles|[6].
             1.  If |item| has the [=Unit Exponent tag=], then set
                 |globalState|["{{HIDReportItem/unitExponent}}"] to the
-                result of interpreting the lowest 4 bits of the [=item data
-                field=] as a signed two's complement integer.
+                result of interpreting the lowest 4 bits of |value| as a
+                signed two's complement integer.
             1.  If |item| has the [=Push tag=], then [=stack/push=] a
                 copy of |globalState| onto |globalStack|.
             1.  If |item| has the [=Pop tag=], then [=stack/pop=] from
@@ -559,10 +570,10 @@ field=]. Each item also has a tag that identifies its type.
         [=Main item=].
 
     *   If |item| is a [=Local item=]:
-        1.  Let |value| be the [=item data field=]
-            interpreted as an `unsigned long`.
+        1.  Let |value| be |item|'s [=unsigned item data value=].
         1.  If |item| has the [=Usage tag=], [=Usage Minimum tag=], or
-            [=Usage Maximum tag=], and |item|'s [=bSize field=] is 1 or 2:
+            [=Usage Maximum tag=], and |item|'s [=item data size=] is 1
+            or 2 bytes:
             1.  Let |usageId| be an `unsigned short`
                 containing the lower 16 bits of |value|.
             1.  Let |globalState| be the last [=list/item=] of
@@ -586,14 +597,13 @@ field=]. Each item also has a tag that identifies its type.
 </div>
 
 <div algorithm="create a HID report item">
-To <dfn lt="create a HID report item|creating a HID report item">create a HID report
-item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, and
+To <dfn lt="create a HID report item|creating a HID report item">create a HID
+report item</dfn> with |item|, |localState|, |globalState|, |usages|, and
 |stringIndices|, run the following steps:
 
 1.  Let |reportItem| be a [=new=] {{HIDReportItem}}
     dictionary.
-1.  Let |value| be the [=item data field=] interpreted as
-    an `unsigned long`.
+1.  Let |value| be |item|'s [=unsigned item data value=].
 1.  Let |bitfield| be a [=list=] of `boolean` values representing each
     of the bits of |value|, starting from the low-order bits.
 1.  Set |reportItem|["{{HIDReportItem/isConstant}}"] to |bitfield|[0].
