@@ -1774,13 +1774,12 @@ dictionary HIDReportItem {
   </dd>
   <dt><dfn>usages</dfn> member</dt>
   <dd>
-    If {{HIDReportItem/isRange}} is `true` or this item has no
-    associated [=HID usage=] values, then {{HIDReportItem/usages}} MUST
-    be undefined.
+    If {{HIDReportItem/isRange}} is `true` then
+    {{HIDReportItem/usages}} MUST be undefined.
 
     If {{HIDReportItem/isRange}} is `false` then
     {{HIDReportItem/usages}} is a [=sequence=] of [=HID usage=] values
-    associated with this item.
+    associated with this item, which may be empty.
   </dd>
   <dt><dfn>usageMinimum</dfn> member</dt>
   <dd>
