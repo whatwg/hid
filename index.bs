@@ -1243,6 +1243,9 @@ also revoke additional (unspecified yet) permissions in the future.
 The {{HIDDevice/forget()}} method steps are:
 
 1.  Let |promise| be [=a new promise=].
+1.  If [=this=]'s [=relevant global object=]'s [=associated Document=] is not [=fully active=], then:
+    1. [=Reject=] |promise| with an "{{InvalidStateError}}" {{DOMException}}.
+    1. Return |promise|.
 1.  Perform the following steps [=in parallel=]:
     1.  [=list/For each=] |device| of
         [=this=].{{HID/[[devices]]}}:
