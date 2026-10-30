@@ -353,7 +353,6 @@ field=]. Each item also has a tag that identifies its type.
 1.  Initialize |ancestors| to be an empty [=list=].
 1.  Initialize |localState| to be an empty [=ordered map=].
 1.  Initialize |usages| to be an empty [=sequence=] of `unsigned long`.
-1.  Initialize |stringIndices| to be an empty [=list=].
 1.  Initialize |globalStack| to be an empty [=stack=].
 1.  Initialize |initialGlobalState| to be an empty [=ordered map=].
 1.  Initialize |reportId| to 0.
@@ -576,8 +575,10 @@ field=]. Each item also has a tag that identifies its type.
             |localState|["{{HIDReportItem/usageMinimum}}"] to |value|.
         1.  If |item| has the [=Usage Maximum tag=], then set
             |localState|["{{HIDReportItem/usageMaximum}}"] to |value|.
-        1.  If |item| has the [=String Index tag=], then
-            [=list/append=] |value| to |stringIndices|.
+        1.  If |item| has the [=String Index tag=]:
+            1.  If `"stringIndices"` is not in |localState|, set
+                |localState|[`"stringIndices"`] to an empty [=list=].
+            1.  [=list/Append=] |value| to |localState|[`"stringIndices"`].
         1.  If |item| has the [=String Minimum tag=], then set
             |localState|[`"stringMinimum"`] to |value|.
         1.  If |item| has the [=String Maximum tag=], then set
@@ -587,8 +588,8 @@ field=]. Each item also has a tag that identifies its type.
 
 <div algorithm="create a HID report item">
 To <dfn lt="create a HID report item|creating a HID report item">create a HID report
-item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, and
-|stringIndices|, run the following steps:
+item</dfn> with <var ignore>item</var>, |localState|, |globalState|, and |usages|,
+run the following steps:
 
 1.  Let |reportItem| be a [=new=] {{HIDReportItem}}
     dictionary.
@@ -651,14 +652,17 @@ item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, a
     |localState|["{{HIDReportItem/usageMaximum}}"].
 1.  If `"stringMinimum"` is in |localState| and `"stringMaximum"` is in
     |localState|:
+    1.  If `"stringIndices"` is not in |localState|, set
+        |localState|[`"stringIndices"`] to an empty [=list=].
     1.  [=list/Append=] the [=list/item=]s of [=the range=] from
         |localState|[`"stringMinimum"`] to |localState|[`"stringMaximum"`]
-        to |stringIndices|.
-1.  [=list/For each=] |stringIndex| of |stringIndices|:
-    1.  Let |string| be the result of reading the string descriptor at
-        index |stringIndex|.
-    1.  [=list/Append=] |string| to
-        |reportItem|["{{HIDReportItem/strings}}"].
+        to |localState|[`"stringIndices"`].
+1.  If `"stringIndices"` is in |localState|:
+    1.  [=list/For each=] |stringIndex| of |localState|[`"stringIndices"`]:
+        1.  Let |string| be the result of reading the string descriptor at
+            index |stringIndex|.
+        1.  [=list/Append=] |string| to
+            |reportItem|["{{HIDReportItem/strings}}"].
 1.  Return |reportItem|.
 
 </div>
