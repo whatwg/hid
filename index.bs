@@ -393,7 +393,7 @@ field=]. Each item also has a tag that identifies its type.
                 |globalState|["{{HIDReportInfo/reportId}}"].
             1.  Let |reportItem| be the result of
                 [=creating a HID report item=] with |item|, |localState|,
-                |globalState|, |usages|, and <var ignore>strings</var>.
+                |globalState|, |usages|, and |stringIndices|.
             1.  [=list/For each=] |collection| of
                 |ancestors|:
                 1.  Let |reports| be:
