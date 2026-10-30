@@ -424,9 +424,9 @@ field=]. Each item also has a tag that identifies its type.
             1.  If the [=list/size=] of |usages| is greater than 1,
                 remove the first [=list/item=] of |usages|.
             1.  Set |collection|["{{HIDCollectionInfo/usagePage}}"] to
-                |globalState|["{{HIDCollectionInfo/usagePage}}"].
+                the high order bits of |usage|.
             1.  Set |collection|["{{HIDCollectionInfo/usage}}"] to
-                |usage|.
+                the low order bits of |usage|.
             1.  Set |collection|["{{HIDCollectionInfo/type}}"] to the
                 value representing the collection's type.
             1.  Set |collection|["{{HIDCollectionInfo/children}}"] to
