@@ -6,6 +6,9 @@ Abstract:
   This document describes an API for providing access to devices that
   support the Human Interface Device (HID) protocol.
 Markup Shorthands: css no, markdown yes
+Translation: zh-Hans https://htmlspecs.com/hid/
+Translation: ja https://jp.htmlspecs.com/hid/
+Translation: ko https://ko.htmlspecs.com/hid/
 </pre>
 
 <pre class="biblio">
@@ -558,16 +561,17 @@ field=]. Each item also has a tag that identifies its type.
     *   If |item| is a [=Local item=]:
         1.  Let |value| be the [=item data field=]
             interpreted as an `unsigned long`.
-        1.  If |item| has the [=Usage tag=]:
-            1.  If |item|'s [=bSize field=] is 1 or 2:
-                1.  Let |usageId| be an `unsigned short`
-                    containing the lower 16 bits of |value|.
-                1.  Let |globalState| be the last [=list/item=] of
-                    |globalStack|.
-                1.  Set |value| to a [=HID usage=] composed of
-                    |globalState|["{{HIDCollectionInfo/usagePage}}"] in the
-                    high order bits and |usageId| in the low order bits.
-            1.  [=list/Append=] |value| to |usages|.
+        1.  If |item| has the [=Usage tag=], [=Usage Minimum tag=], or
+            [=Usage Maximum tag=], and |item|'s [=bSize field=] is 1 or 2:
+            1.  Let |usageId| be an `unsigned short`
+                containing the lower 16 bits of |value|.
+            1.  Let |globalState| be the last [=list/item=] of
+                |globalStack|.
+            1.  Set |value| to a [=HID usage=] composed of
+                |globalState|["{{HIDCollectionInfo/usagePage}}"] in the
+                high order bits and |usageId| in the low order bits.
+        1.  If |item| has the [=Usage tag=], then [=list/append=] |value|
+            to |usages|.
         1.  If |item| has the [=Usage Minimum tag=], then set
             |localState|["{{HIDReportItem/usageMinimum}}"] to |value|.
         1.  If |item| has the [=Usage Maximum tag=], then set
@@ -634,15 +638,17 @@ item</dfn> with <var ignore>item</var>, |localState|, |globalState|, |usages|, a
     |globalState|["{{HIDReportItem/physicalMinimum}}"].
 1.  Set |reportItem|["{{HIDReportItem/physicalMaximum}}"] to
     |globalState|["{{HIDReportItem/physicalMaximum}}"].
-1.  If "{{HIDReportItem/usageMinimum}}" is in |localState|, then set
+1.  Set |reportItem|["{{HIDReportItem/isRange}}"] to `true` if both
+    "{{HIDReportItem/usageMinimum}}" and "{{HIDReportItem/usageMaximum}}"
+    are in |localState| and |localState|["{{HIDReportItem/usageMinimum}}"]
+    is less than or equal to |localState|["{{HIDReportItem/usageMaximum}}"],
+    or false otherwise.
+1.  If |reportItem|["{{HIDReportItem/isRange}}"] is `true`, set
     |reportItem|["{{HIDReportItem/usageMinimum}}"] to
     |localState|["{{HIDReportItem/usageMinimum}}"].
-1.  If "{{HIDReportItem/usageMaximum}}" is in |localState|, then set
+1.  If |reportItem|["{{HIDReportItem/isRange}}"] is `true`, set
     |reportItem|["{{HIDReportItem/usageMaximum}}"] to
     |localState|["{{HIDReportItem/usageMaximum}}"].
-1.  Set |reportItem|["{{HIDReportItem/isRange}}"] to `true` if
-    |reportItem|["{{HIDReportItem/usageMinimum}}"] is less than
-    |reportItem|["{{HIDReportItem/usageMaximum}}"], or `false` otherwise.
 1.  If `"stringMinimum"` is in |localState| and `"stringMaximum"` is in
     |localState|:
     1.  [=list/Append=] the [=list/item=]s of [=the range=] from
@@ -818,7 +824,7 @@ dictionary HIDDeviceRequestOptions {
 
 <xmp class="idl">
 dictionary HIDDeviceFilter {
-    unsigned long vendorId;
+    unsigned short vendorId;
     unsigned short productId;
     unsigned short usagePage;
     unsigned short usage;
