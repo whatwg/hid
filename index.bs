@@ -196,6 +196,13 @@ require two separate interactions: one interaction to select the
 device from the list and a second interaction to confirm the
 selection and dismiss the dialog.
 
+Additionally, allowing pages to access HID devices that are built in to a
+host is higher risk as these HID devices generally cannot be disconnected,
+and these devices are more likely to be exploited at scale since attackers
+can be more confident that a particular host has the vulnerable device. As
+such, a user agent may exclude these devices from the chooser, or require
+additional steps to make them visible.
+
 # Extensions to the `Navigator` interface # {#extensions-to-the-navigator-interface}
 
 <xmp class="idl">
