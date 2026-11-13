@@ -2074,7 +2074,7 @@ parsing its contents as JSON.
 
 The <dfn>HID blocklist</dfn> is the result of [=parsing the blocklist=]
 at <a href=
-"https://github.com/whatwg/hid/blob/main/blocklist.txt">https://github.com/whatwg/hid/blob/main/blocklist.txt</a>
+"https://hid.spec.whatwg.org/blocklist.txt">https://hid.spec.whatwg.org/blocklist.txt</a>
 
 <div algorithm="blocked report">
 A report is a <dfn>blocked report</dfn> if the following steps return
