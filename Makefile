@@ -22,4 +22,5 @@ local: index.bs
 
 deploy: index.bs
 	curl --remote-name --fail https://resources.whatwg.org/build/deploy.sh
+	EXTRA_FILES="blocklist.txt" \
 	bash ./deploy.sh
