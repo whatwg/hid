@@ -424,8 +424,6 @@ field=]. Each item also has a tag that identifies its type.
             1.  Let |collection| be a [=new=]
                 {{HIDCollectionInfo}} dictionary.
             1.  Let |usage| be the first [=list/item=] of |usages|.
-            1.  If the [=list/size=] of |usages| is greater than 1,
-                remove the first [=list/item=] of |usages|.
             1.  Set |collection|["{{HIDCollectionInfo/usagePage}}"] to
                 |globalState|["{{HIDCollectionInfo/usagePage}}"].
             1.  Set |collection|["{{HIDCollectionInfo/usage}}"] to
