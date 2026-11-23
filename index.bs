@@ -791,8 +791,10 @@ The {{HID/requestDevice()}} method steps are:
     1.  [=list/For each=] |device| of
         [=this=].{{HID/[[devices]]}}:
         1.  If |device| represents a [=HID interface=] exposed by the
-            chosen device, then set |device|.{{HIDDevice/[[state]]}} to
-            `"closed"` and [=list/append=] |device| to |devices|.
+            chosen device, then:
+            1.  If |device|.{{HIDDevice/[[state]]}} is `"forgotten"`,
+                set |device|.{{HIDDevice/[[state]]}} to `"closed"`.
+            1. [=list/Append=] |device| to |devices|.
     1.  [=Queue a global task=] on the [=relevant global object=] of
         |device| using the [=HID device task source=] to [=resolve=]
         |promise| with |devices|.
